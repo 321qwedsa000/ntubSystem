@@ -32,6 +32,7 @@ class NtubLoginSystem:
         loginResponse = self.session.post(self.LOGIN_URL,data=loginData)
         self.cookies = loginResponse.cookies
     
+    #easy one
     def search_curriculum(self,thisYear,thisTeam):
         search_dict = {
             'ThisYear':thisYear,
@@ -60,10 +61,11 @@ class NtubLoginSystem:
             table.append(column)
         return table
     
-    def search_midterm_score(self,seayear,seaterm):
+    #difficult one
+    def search_score(self,seayear,seaterm):
         search_dict = {
-            'SEA_Year':seayear,
-            'SEA_Term':seaterm
+            'ctl00$ContentPlaceHolder1$SEA_Year':seayear,
+            'ctl00$ContentPlaceHolder1$SEA_Term':seaterm
         }
         self.__search_VIEW(self.MIDTERM_URL,search_dict)
         response = self.session.get(self.MIDTERM_URL,data=search_dict,cookies=self.cookies)
@@ -82,4 +84,4 @@ if __name__ == "__main__":
     import getpass
     import pprint
     ntubLogin = NtubLoginSystem(input('User Name:'),getpass.getpass())
-    pprint.pprint(ntubLogin.search_midterm_score(109,1))
+    pprint.pprint(ntubLogin.search_score(108,2))
