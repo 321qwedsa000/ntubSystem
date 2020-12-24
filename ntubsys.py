@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import re
 
 class NtubLoginSystem:
     def __search_VIEW(self,url,dic):
@@ -37,11 +38,31 @@ class NtubLoginSystem:
         }
         self.__search_VIEW(self.CURRICULUM_URL,search_dict)
         response = self.session.get(self.CURRICULUM_URL,data=search_dict,cookies=self.cookies)
-        print(response.text)
+        try:
+            soup = BeautifulSoup(response.text,'lxml')
+        except:
+            soup = BeautifulSoup(response.text,'html.parser')
+        curriculum = soup.find('table',{'id':'bgBase'})
+        table = []
+        for row in curriculum.findAll('tr'):
+            column = []
+            for col in row.findAll('td'):
+                a_tag = col.find('a')
+                if a_tag != None:
+                    lesson = a_tag.text
+                    teacher = col.text[len(lesson):-4]
+                    classroom = col.text[len(lesson)+len(teacher):]
+                    column.append(f'{lesson}\n{teacher}\n{classroom}')
+                else:
+                    replaceStr = re.sub(r'\d\d:\d\d\d\d:\d\d','',col.text)
+                    column.append(replaceStr)
+            table.append(column)
+        return table
         
         
 
 if __name__ == "__main__":
     import getpass
+    import pprint
     ntubLogin = NtubLoginSystem(input(),getpass.getpass())
-    ntubLogin.search_curriculum(108,2)
+    pprint.pprint(ntubLogin.search_curriculum(108,2))
