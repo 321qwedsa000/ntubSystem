@@ -64,8 +64,8 @@ class NtubLoginSystem:
     #difficult one
     def search_score(self,seayear,seaterm):
         search_dict = {
-            'ctl00$ContentPlaceHolder1$SEA_Year':seayear,
-            'ctl00$ContentPlaceHolder1$SEA_Term':seaterm
+            'ctl00_ContentPlaceHolder1_SEA_Year':seayear,
+            'ctl00_ContentPlaceHolder1_SEA_Term':seaterm
         }
         self.__search_VIEW(self.MIDTERM_URL,search_dict)
         response = self.session.get(self.MIDTERM_URL,data=search_dict,cookies=self.cookies)
