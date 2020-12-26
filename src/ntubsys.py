@@ -1,10 +1,40 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-
+from enum import Enum
+from datetime import datetime
 class NtubLoginFailedException(Exception):
     def __init__(self,message):
         super(NtubLoginFailedException,self).__init__(message)
+
+class LeaveSubmitMode(Enum):
+    SUBMIT = "送出"
+    SAVE_BUT_NOT_SUBMIT="儲存尚未送出"
+'''
+"AA"=公假
+"AB"=喪假
+"AC"=事假
+"AD"=病假
+"AF"=產前假
+"AI"=分娩假
+"AJ"=流產假
+"AK"=陪產假
+"AL"=公假(不)
+"AM"=重大傷病(不)
+"AN"=停班停課
+"AO"=防疫假'
+'''
+class LeaveReason(Enum):
+    OFFICIAL="AA"
+    FUNERAL="AB"
+    PERSONAL="AC"
+    SICK="AD"
+    PREMATERNITY="AF"
+    MATERNITY="AI"	
+    MISCARRIAGE="AJ"
+    PATERNITY="AK"
+    SERIOUSINJURE="AM"
+    EPIDEMIC_PREVENTATION="AO"
 
 class NtubLoginSystem:
     def __search_Asp_Utils(self,url,dic):
@@ -26,7 +56,8 @@ class NtubLoginSystem:
         self.LOGIN_URL = "http://ntcbadm1.ntub.edu.tw/login.aspx?Type=0" #POST url
         self.CURRICULUM_URL = "http://ntcbadm1.ntub.edu.tw/STDWEB/Sel_Student.aspx" #GET url
         self.MIDTERM_URL = "http://ntcbadm1.ntub.edu.tw/ACAD/STDWEB/GRD_GRDMQry.aspx" #POST url
-        self.SCORE_URL = "http://ntcbadm1.ntub.edu.tw/ACAD/STDWEB/GRD_GRDQry.aspx"
+        self.SCORE_URL = "http://ntcbadm1.ntub.edu.tw/ACAD/STDWEB/GRD_GRDQry.aspx" #POST url
+        self.LEAVE_URL = "http://ntcbadm1.ntub.edu.tw/StdAff/STDWeb/ABS0101Add.aspx" #POST url
         ###################
         # Login into NTUB #
         ###################
@@ -93,7 +124,7 @@ class NtubLoginSystem:
             score_dict[itemTable[i].text] = float(scoreTable[i].text.replace('*','') if scoreTable[i].text != "" else "0.00")
         return score_dict
 
-    def search_all_score(self,seayear,seaterm):
+    def search_all_score(self,seayear:int,seaterm:int):
         search_dict = {
             'ctl00$ContentPlaceHolder1$SEA_Year':seayear,
             'ctl00$ContentPlaceHolder1$SEA_Term':seaterm
@@ -101,10 +132,28 @@ class NtubLoginSystem:
         self.__search_Asp_Utils(self.SCORE_URL,search_dict)
         response = self.session.post(self.SCORE_URL,data=search_dict,cookies=self.cookies)
         pass #code goes here
+    
+    def online_leave(self,startDate:datetime,endDate:datetime,selection:list):
+        submit_dict = {
+            'Hid_SerialNo':'xxxxxxxxxxx',
+            'Hid_SDate':startDate.strftime('%Y/%m/%d'),
+            'Hid_EDate':endDate.strftime('%Y/%m/%d'),
+            'Hid_HCode':LeaveReason.OFFICIAL.value,
+            'SEA_SDate':startDate.strftime('%Y/%m/%d'),
+            'SEA_EDate':endDate.strftime('%Y/%m/%d'),
+            'SEA_Note':'Leave From Python',
+            'SEA_Holiday':LeaveReason.OFFICIAL.value,
+            'REC_Insert':'on'
+        }
+        for e in selection:
+            submit_dict[f'SEA_Section${e}']='on'
+        self.__search_Asp_Utils(self.LEAVE_URL,submit_dict)
+        response = self.session.post(self.LEAVE_URL,data=submit_dict,cookies=self.cookies)
+        print(response.text)
 
 if __name__ == "__main__":
     import getpass
     import pprint
     ntubLogin = NtubLoginSystem(input('User Name:'),getpass.getpass())
     #pprint.pprint(ntubLogin.search_midtern_score(109,1))
-    ntubLogin.search_all_score(108,1)
+    ntubLogin.online_leave(datetime(2020,12,26),datetime(2020,12,26),[x for x in range(2,4)])
