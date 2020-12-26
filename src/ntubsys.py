@@ -149,8 +149,7 @@ class NtubLoginSystem:
             submit_dict[f'SEA_Section${e}']='on'
         self.__search_Asp_Utils(self.LEAVE_URL,submit_dict)
         response = self.session.post(self.LEAVE_URL,data=submit_dict,cookies=self.cookies)
-        print(response.text)
-
+        
 if __name__ == "__main__":
     import getpass
     import pprint
