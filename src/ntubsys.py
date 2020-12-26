@@ -30,6 +30,7 @@ class NtubLoginSystem:
         ###################
         # Login into NTUB #
         ###################
+        #
         self.session = requests.Session()
         self.username = username
         self.password = password
@@ -44,6 +45,7 @@ class NtubLoginSystem:
         if loginResponse.text.startswith('<script>'):
             raise NtubLoginFailedException(f'Login {username} failed')
         self.cookies = loginResponse.cookies
+        #
 
     def search_curriculum(self,thisYear,thisTeam):
         search_dict = {
@@ -68,7 +70,7 @@ class NtubLoginSystem:
                     classroom = col.text[len(lesson)+len(teacher):]
                     column.append(f'{lesson}\n{teacher}\n{classroom}') #split it
                 else:
-                    replaceStr = re.sub(r'\d\d:\d\d\d\d:\d\d','',col.text) #Remove duplicate stuffs
+                    replaceStr = re.sub(r'\d\d:\d\d\d\d:\d\d','',col.text) #Remove class time
                     column.append(replaceStr)
             table.append(column)
         return table
@@ -98,7 +100,8 @@ class NtubLoginSystem:
         }
         self.__search_Asp_Utils(self.SCORE_URL,search_dict)
         response = self.session.post(self.SCORE_URL,data=search_dict,cookies=self.cookies)
-        print(response.text)
+        pass #code goes here
+
 if __name__ == "__main__":
     import getpass
     import pprint
