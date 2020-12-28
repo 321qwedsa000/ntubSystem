@@ -119,7 +119,7 @@ class NtubLoginSystem:
             soup = BeautifulSoup(response.text,'html.parser')
         score_dict = {}
         itemTable = soup.findAll('td',attrs={'width':'380'})
-        scoreTable = soup.findAll('span',attrs={'id':lambda a: a and len(a) >= 7 and a[-7:] == "Score_M"})
+        scoreTable = soup.findAll('span',attrs={'id':lambda a: a and len(a) >= 8 and a[-8:] == "_Score_M"})
         for i in range(len(itemTable)):
             score_dict[itemTable[i].text] = float(scoreTable[i].text.replace('*','') if scoreTable[i].text != "" else "0.00")
         return score_dict
@@ -131,7 +131,20 @@ class NtubLoginSystem:
         }
         self.__search_Asp_Utils(self.SCORE_URL,search_dict)
         response = self.session.post(self.SCORE_URL,data=search_dict,cookies=self.cookies)
-        print(response.text)
+        try:
+            soup = BeautifulSoup(response.text,'lxml')
+        except:
+            soup = BeautifulSoup(response.text,'html.parser')
+        scoreTable = []
+        itemTable = soup.findAll('td',attrs={'width':'330'})
+        midScore = soup.findAll('span',attrs={'id':lambda a: a and len(a) >= 8 and a[-8:] == "_Score_M"})
+        endScore = soup.findAll('span',attrs={'id':lambda a: a and len(a) >= 6 and a[-6:] == "_Score"})
+        print(len(itemTable),len(midScore),len(endScore))
+        for i in range(len(itemTable)):
+            scoreTable.append([itemTable[i].text,
+            float(midScore[i].text.replace('*','') if midScore[i].text != "" else "0.00"),
+            float(endScore[i].text.replace('*','') if endScore[i].text != "" else "0.00")])
+        return scoreTable
 
 ''' Deprecated
     def online_leave(self,startDate:datetime,endDate:datetime,selection:list):
