@@ -58,6 +58,7 @@ class NtubLoginSystem:
         self.MIDTERM_URL = "http://ntcbadm1.ntub.edu.tw/ACAD/STDWEB/GRD_GRDMQry.aspx" #POST url
         self.SCORE_URL = "http://ntcbadm1.ntub.edu.tw/ACAD/STDWEB/GRD_GRDQry.aspx" #POST url
         self.LEAVE_URL = "http://ntcbadm1.ntub.edu.tw/StdAff/STDWeb/ABS0101Add.aspx" #POST url
+        self.CHANGEPWD_URL = "http://ntcbadm1.ntub.edu.tw/STDWEB/STD_PwdChange.aspx" #POST url
         ###################
         # Login into NTUB #
         ###################
@@ -124,6 +125,18 @@ class NtubLoginSystem:
             score_dict[itemTable[i].text] = float(scoreTable[i].text.replace('*','') if scoreTable[i].text != "" else "0.00")
         return score_dict
 
+    def changepassword(self,newPassword):
+        if len(newPassword) < 6: return
+        submit_pwd = {
+            'txtOri_Pwd':self.password,
+            'txtNew_Pwd':newPassword,
+            'txtSure_Pwd':newPassword,
+            'btnOK':''
+        }
+        self.__search_Asp_Utils(self.CHANGEPWD_URL,submit_pwd)
+        response = self.session.post(self.CHANGEPWD_URL,data=submit_pwd,cookies=self.cookies)
+        
+
     def search_all_score(self,seayear:int,seaterm:int):
         search_dict = {
             'ctl00$ContentPlaceHolder1$SEA_Year':seayear,
@@ -168,4 +181,3 @@ if __name__ == "__main__":
     import getpass
     import pprint
     ntubLogin = NtubLoginSystem(input('User Name:'),getpass.getpass())
-    pprint.pprint(ntubLogin.search_all_score(108,1))
