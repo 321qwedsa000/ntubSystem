@@ -131,28 +131,28 @@ class NtubLoginSystem:
         }
         self.__search_Asp_Utils(self.SCORE_URL,search_dict)
         response = self.session.post(self.SCORE_URL,data=search_dict,cookies=self.cookies)
-        pass #code goes here
-    
+        print(response.text)
+
+''' Deprecated
     def online_leave(self,startDate:datetime,endDate:datetime,selection:list):
         submit_dict = {
-            'Hid_SerialNo':'xxxxxxxxxxx',
-            'Hid_SDate':startDate.strftime('%Y/%m/%d'),
-            'Hid_EDate':endDate.strftime('%Y/%m/%d'),
-            'Hid_HCode':LeaveReason.OFFICIAL.value,
             'SEA_SDate':startDate.strftime('%Y/%m/%d'),
             'SEA_EDate':endDate.strftime('%Y/%m/%d'),
             'SEA_Note':'Leave From Python',
-            'SEA_Holiday':LeaveReason.OFFICIAL.value,
-            'REC_Insert':'on'
+            'SEA_Holiday':LeaveReason.PERSONAL.value,
+            'REC_File_Value':'',
+            'REC_FILE_UKEY':'',
+            'REC_Insert':''
         }
         for e in selection:
             submit_dict[f'SEA_Section${e}']='on'
         self.__search_Asp_Utils(self.LEAVE_URL,submit_dict)
         response = self.session.post(self.LEAVE_URL,data=submit_dict,cookies=self.cookies)
+        print(response.text)
+'''
         
 if __name__ == "__main__":
     import getpass
     import pprint
     ntubLogin = NtubLoginSystem(input('User Name:'),getpass.getpass())
-    #pprint.pprint(ntubLogin.search_midtern_score(109,1))
-    ntubLogin.online_leave(datetime(2020,12,26),datetime(2020,12,26),[x for x in range(2,4)])
+    pprint.pprint(ntubLogin.search_all_score(108,1))
