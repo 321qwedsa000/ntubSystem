@@ -49,7 +49,7 @@ class NtubLoginSystem:
         dic['__VIEWSTATEGENERATOR'] = soup.select_one('#__VIEWSTATEGENERATOR')['value'] if soup.select_one('#__VIEWSTATEGENERATOR') != None else ''
         dic['__EVENTVALIDATION'] = soup.select_one('#__EVENTVALIDATION')['value'] if soup.select_one('#__EVENTVALIDATION') != None else ''
 
-    def __init__(self,username,password):
+    def __init__(self,username:str,password:str):
         #####################
         # Ntub Related URLS #
         #####################
@@ -64,22 +64,41 @@ class NtubLoginSystem:
         ###################
         #
         self.session = requests.Session()
-        self.username = username
-        self.password = password
         loginData = {
-            'UserID':self.username,
-            'PWD':self.password,
+            'UserID':username,
+            'PWD':password,
             'loginbtn':''
         }
         self.__search_Asp_Utils(self.LOGIN_URL,loginData)
-        self.cookies = None
+        self._password = password
         loginResponse = self.session.post(self.LOGIN_URL,data=loginData)
         if loginResponse.text.startswith('<script>'):
             raise NtubLoginFailedException(f'Login {username} failed')
-        self.cookies = loginResponse.cookies
+        self._cookies = loginResponse.cookies
+        try:
+            soup = BeautifulSoup(loginResponse.text,'lxml')
+        except:
+            soup = BeautifulSoup(loginResponse.text,'html.parser')
+        self._classname = soup.find('span',{'id':'ClassName'}).text
+        self._stdno = soup.find('span',{'id':'StdNo'}).text
+        self._name = soup.find('span',{'id':'Name'}).text
         #
-
-    def search_curriculum(self,thisYear,thisTeam):
+    @property
+    def cookies(self):
+        return self._cookies
+    @property
+    def password(self):
+        return self._password
+    @property
+    def className(self):
+        return self._classname
+    @property
+    def studentNumber(self):
+        return self._stdno
+    @property
+    def name(self):
+        return self._name
+    def search_curriculum(self,thisYear:int,thisTeam:int):
         search_dict = {
             'ThisYear':thisYear,
             'ThisTeam':thisTeam,
@@ -107,7 +126,7 @@ class NtubLoginSystem:
             table.append(column)
         return table
     
-    def search_midtern_score(self,seayear,seaterm):
+    def search_midtern_score(self,seayear:int,seaterm:int):
         search_dict = {
             'ctl00$ContentPlaceHolder1$SEA_Year':seayear,
             'ctl00$ContentPlaceHolder1$SEA_Term':seaterm
@@ -125,16 +144,17 @@ class NtubLoginSystem:
             score_dict[itemTable[i].text] = float(scoreTable[i].text.replace('*','') if scoreTable[i].text != "" else "0.00")
         return score_dict
 
-    def changepassword(self,newPassword):
+    def changepassword(self,newPassword:str):
         if len(newPassword) < 6: return
         submit_pwd = {
-            'txtOri_Pwd':self.password,
+            'txtOri_Pwd':self._password,
             'txtNew_Pwd':newPassword,
             'txtSure_Pwd':newPassword,
             'btnOK':''
         }
         self.__search_Asp_Utils(self.CHANGEPWD_URL,submit_pwd)
         response = self.session.post(self.CHANGEPWD_URL,data=submit_pwd,cookies=self.cookies)
+        self._password = newPassword
         
 
     def search_all_score(self,seayear:int,seaterm:int):
@@ -159,23 +179,21 @@ class NtubLoginSystem:
             float(endScore[i].text.replace('*','') if endScore[i].text != "" else "0.00")])
         return scoreTable
 
-''' Deprecated
+
     def online_leave(self,startDate:datetime,endDate:datetime,selection:list):
         submit_dict = {
-            'SEA_SDate':startDate.strftime('%Y/%m/%d'),
-            'SEA_EDate':endDate.strftime('%Y/%m/%d'),
-            'SEA_Note':'Leave From Python',
-            'SEA_Holiday':LeaveReason.PERSONAL.value,
-            'REC_File_Value':'',
-            'REC_FILE_UKEY':'',
-            'REC_Insert':''
+            'SEA_SDate':(None,startDate.strftime('%Y/%m/%d')),
+            'SEA_EDate':(None,endDate.strftime('%Y/%m/%d')),
+            'SEA_Note':(None,'Leave From Python'),
+            'SEA_Holiday':(None,LeaveReason.PERSONAL.value),
+            'REC_Insert':(None,'')
         }
         for e in selection:
-            submit_dict[f'SEA_Section${e}']='on'
+            submit_dict[f'SEA_Section${e}']=(None,'on')
         self.__search_Asp_Utils(self.LEAVE_URL,submit_dict)
         response = self.session.post(self.LEAVE_URL,data=submit_dict,cookies=self.cookies)
         print(response.text)
-'''
+    
         
 if __name__ == "__main__":
     import getpass
