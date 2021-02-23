@@ -3,6 +3,9 @@ from bs4 import BeautifulSoup
 import re
 from enum import Enum
 from datetime import datetime
+import xml.etree.ElementTree as ET
+
+
 class NtubLoginFailedException(Exception):
     def __init__(self,message):
         super(NtubLoginFailedException,self).__init__(message)
@@ -59,6 +62,7 @@ class NtubLoginSystem:
         self.SCORE_URL = "http://ntcbadm1.ntub.edu.tw/ACAD/STDWEB/GRD_GRDQry.aspx" #POST url
         self.LEAVE_URL = "http://ntcbadm1.ntub.edu.tw/StdAff/STDWeb/ABS0101Add.aspx" #POST url
         self.CHANGEPWD_URL = "http://ntcbadm1.ntub.edu.tw/STDWEB/STD_PwdChange.aspx" #POST url
+        self.LESSON_URL = "http://ntcbadm1.ntub.edu.tw/HttpRequest/SELChooseHttpXML.aspx" #POST URL
         ###################
         # Login into NTUB #
         ###################
@@ -98,6 +102,30 @@ class NtubLoginSystem:
     @property
     def name(self):
         return self._name
+    def parse_lessons(self,day,section): #901 , 400
+        submit_dict = {
+            "ModuleName": 'QueryCurData',
+            "EduNo": 4,
+            "Desire": '',
+            "DeptNo": 400,
+            "Grade": '',
+            "Week": day,
+            "Section": section,
+            "CosName": '',
+            "CurClass": ''
+        }
+        response = self.session.post(self.LESSON_URL,data=submit_dict)
+        root = ET.fromstring(response.text)
+        lst = []
+        for e in root.findall("DataItem"):
+            dataColumn = {}
+            for f in e:
+                dataColumn[f.tag] = f.text
+            lst.append(dataColumn)
+        return lst
+    def grab_lessons(self,*args,**kwargs):
+        pass
+
     def search_curriculum(self,thisYear:int,thisTeam:int):
         search_dict = {
             'ThisYear':thisYear,
@@ -199,3 +227,5 @@ if __name__ == "__main__":
     import getpass
     import pprint
     ntubLogin = NtubLoginSystem(input('User Name:'),getpass.getpass())
+    pprint.pprint(ntubLogin.parse_lessons(3,5))
+
