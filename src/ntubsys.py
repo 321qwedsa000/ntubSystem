@@ -160,7 +160,7 @@ class NtubLoginSystem:
             "Years": soup.find("input",{"id":"SelYear"})["value"],
             "Term": soup.find("input",{"id":"SelTerm"})["value"],
             "Desire": '',
-            "OpClass": soup.find("input",{"id":"ClassNo"})["value"],
+            "OpClass": currentDict["OP_Class"],
             "Serial": currentDict["Serial"],
             "CurTerm": currentDict["Cur_Term"],
             "EduData": soup.find("input",{"id":"EduData"})["value"],
@@ -184,7 +184,7 @@ class NtubLoginSystem:
         "Years": soup.find("input",{"id":"SelYear"})["value"],
         "Term": soup.find("input",{"id":"SelTerm"})["value"],
         "Desire": "",
-        "OpClass": soup.find("input",{"id":"ClassNo"})["value"],
+        "OpClass": currentDict["OP_Class"],
         "Serial": currentDict["Serial"],
         "CurTerm": currentDict["Cur_Term"],
         "CosID": "40328842",
@@ -295,10 +295,11 @@ if __name__ == "__main__":
     import getpass
     import pprint
     ntubLogin = NtubLoginSystem(input('User Name:'),getpass.getpass())
+    lesson = ntubLogin.parse_lessons(ntubLogin.get_deptNo("四技通識"),2,5)
     #以禮拜三第五堂課為例
-    pprint.pprint(ntubLogin.parse_lessons(ntubLogin.get_deptNo("四技財稅"),3,5))
-    ntubLogin.grab_lessons(ntubLogin.parse_lessons(ntubLogin.get_deptNo("四技財稅"),3,5)['40328660'])
+    pprint.pprint(lesson)
+    ntubLogin.grab_lessons(lesson['40037520'])
     #選四技財稅行政法課程
-    ntubLogin.quit_lessons(ntubLogin.parse_lessons(ntubLogin.get_deptNo("四技財稅"),3,5)['40328660'])
+    ntubLogin.quit_lessons(lesson['40037520'])
     #退選行政法課程
 
