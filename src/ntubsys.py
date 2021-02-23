@@ -124,8 +124,29 @@ class NtubLoginSystem:
             lst.append(dataColumn)
         return lst
     def grab_lessons(self,*args,**kwargs):
-        pass
-
+    '''
+        ModuleName: DoAddCur
+        Years: 109
+        Term: 2
+        Desire: 
+        OpClass: 40320A
+        Serial: 18
+        CurTerm: 20
+        CosID: 40328842
+        EduData: 28272827282727272728272827272927272727272727272728131703773170974393737387525
+        Contrast: 27272827282728272727875317037710
+        CreditData: 27282727272728272727272727835739257385713
+        AddData: 27272727272727273333375708
+        EduCourseData: 27272727272727272727273333757375711
+        OtherData: 27272727272727272737573375709
+        ConvertData: 27272727272727272727272827272727272789573869388357375718
+        IsSameCurAdd: 
+        EduNoForMasterDoctor: 
+        PrescribedCurKind: 
+        OpDeptGeneralCur: 
+        OpDeptPhysicalCur: 
+        OpDeptEduCur: 
+    '''
     def search_curriculum(self,thisYear:int,thisTeam:int):
         search_dict = {
             'ThisYear':thisYear,
