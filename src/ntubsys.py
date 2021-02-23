@@ -295,6 +295,7 @@ if __name__ == "__main__":
     import getpass
     import pprint
     ntubLogin = NtubLoginSystem(input('User Name:'),getpass.getpass())
+    #以禮拜三第五堂課為例
     pprint.pprint(ntubLogin.parse_lessons(ntubLogin.get_deptNo("四技財稅"),3,5))
     ntubLogin.grab_lessons(ntubLogin.parse_lessons(ntubLogin.get_deptNo("四技財稅"),3,5)['40328660'])
     #選四技財稅行政法課程
