@@ -63,6 +63,7 @@ class NtubLoginSystem:
         self.LEAVE_URL = "http://ntcbadm1.ntub.edu.tw/StdAff/STDWeb/ABS0101Add.aspx" #POST url
         self.CHANGEPWD_URL = "http://ntcbadm1.ntub.edu.tw/STDWEB/STD_PwdChange.aspx" #POST url
         self.LESSON_URL = "http://ntcbadm1.ntub.edu.tw/HttpRequest/SELChooseHttpXML.aspx" #POST URL
+        self.MAIN_PAGE_URL = "http://ntcbadm1.ntub.edu.tw/STDWEB/SelChoose/SelChooseMain.aspx" #GET URL
         ###################
         # Login into NTUB #
         ###################
@@ -102,12 +103,37 @@ class NtubLoginSystem:
     @property
     def name(self):
         return self._name
-    def parse_lessons(self,day,section): #901 , 400
+    def get_deptNo(self,name):
+        mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
+        try:
+            soup = BeautifulSoup(mainPageResponse.text,'lxml')
+        except:
+            soup = BeautifulSoup(mainPageResponse.text,'html.parser')
+        submit_data = {
+            "ModuleName": "InitSelDept",
+            "Years": soup.find("input",{"id":"SelYear"})["value"],
+            "Term": soup.find("input",{"id":"SelTerm"})["value"],
+            "Desire": '',
+            "EduNo": soup.find("input",{'id':'EduNo'})['value']
+        }
+        response = self.session.post(self.LESSON_URL,data=submit_data)
+        root = ET.fromstring(response.text)
+        dataDict = {}
+        for e in root.findall("DataItem"):
+            dataDict[e[1].text] = e[0].text
+        return dataDict[name]
+
+    def parse_lessons(self,deptNo,day,section): #901 , 400
+        mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
+        try:
+            soup = BeautifulSoup(mainPageResponse.text,'lxml')
+        except:
+            soup = BeautifulSoup(mainPageResponse.text,'html.parser')
         submit_dict = {
             "ModuleName": 'QueryCurData',
-            "EduNo": 4,
+            "EduNo": soup.find("input",{'id':'EduNo'})['value'],
             "Desire": '',
-            "DeptNo": 400,
+            "DeptNo": deptNo,
             "Grade": '',
             "Week": day,
             "Section": section,
@@ -116,37 +142,58 @@ class NtubLoginSystem:
         }
         response = self.session.post(self.LESSON_URL,data=submit_dict)
         root = ET.fromstring(response.text)
-        lst = []
+        dic = {}
         for e in root.findall("DataItem"):
             dataColumn = {}
             for f in e:
                 dataColumn[f.tag] = f.text
-            lst.append(dataColumn)
-        return lst
-    def grab_lessons(self,*args,**kwargs):
-    '''
-        ModuleName: DoAddCur
-        Years: 109
-        Term: 2
-        Desire: 
-        OpClass: 40320A
-        Serial: 18
-        CurTerm: 20
-        CosID: 40328842
-        EduData: 28272827282727272728272827272927272727272727272728131703773170974393737387525
-        Contrast: 27272827282728272727875317037710
-        CreditData: 27282727272728272727272727835739257385713
-        AddData: 27272727272727273333375708
-        EduCourseData: 27272727272727272727273333757375711
-        OtherData: 27272727272727272737573375709
-        ConvertData: 27272727272727272727272827272727272789573869388357375718
-        IsSameCurAdd: 
-        EduNoForMasterDoctor: 
-        PrescribedCurKind: 
-        OpDeptGeneralCur: 
-        OpDeptPhysicalCur: 
-        OpDeptEduCur: 
-    '''
+            dic[dataColumn["Cos_ID"]] = dataColumn
+        return dic
+    def grab_lessons(self,currentDict):
+        mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
+        try:
+            soup = BeautifulSoup(mainPageResponse.text,'lxml')
+        except:
+            soup = BeautifulSoup(mainPageResponse.text,'html.parser')
+        submit_dict = {
+            "ModuleName": "DoAddCur",
+            "Years": soup.find("input",{"id":"SelYear"})["value"],
+            "Term": soup.find("input",{"id":"SelTerm"})["value"],
+            "Desire": '',
+            "OpClass": soup.find("input",{"id":"ClassNo"})["value"],
+            "Serial": currentDict["Serial"],
+            "CurTerm": currentDict["Cur_Term"],
+            "EduData": soup.find("input",{"id":"EduData"})["value"],
+            "Contrast": soup.find("input",{"id":"Contrast"})["value"],
+            "CreditData": soup.find("input",{"id":"CreditData"})["value"],
+            "AddData": soup.find("input",{"id":"AddData"})["value"],
+            "EduCourseData": soup.find("input",{"id":"EduCourseData"})["value"],
+            "OtherData": soup.find("input",{"id":"OtherData"})["value"],
+            "ConvertData": soup.find("input",{"id":"ConvertData"})["value"]
+        }
+        response = self.session.post(self.LESSON_URL,data=submit_dict)
+        print(response.text)
+    def quit_lessons(self,currentDict):
+        mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
+        try:
+            soup = BeautifulSoup(mainPageResponse.text,'lxml')
+        except:
+            soup = BeautifulSoup(mainPageResponse.text,'html.parser')
+        submit_dict = {
+        "ModuleName": "DoDelCur",
+        "Years": soup.find("input",{"id":"SelYear"})["value"],
+        "Term": soup.find("input",{"id":"SelTerm"})["value"],
+        "Desire": "",
+        "OpClass": soup.find("input",{"id":"ClassNo"})["value"],
+        "Serial": currentDict["Serial"],
+        "CurTerm": currentDict["Cur_Term"],
+        "CosID": "40328842",
+        "ClassNo": "40320A",
+        "DelAllotCur": ""
+        }
+        response = self.session.post(self.LESSON_URL,data=submit_dict)
+        print(response.text)
+
     def search_curriculum(self,thisYear:int,thisTeam:int):
         search_dict = {
             'ThisYear':thisYear,
@@ -228,7 +275,7 @@ class NtubLoginSystem:
             float(endScore[i].text.replace('*','') if endScore[i].text != "" else "0.00")])
         return scoreTable
 
-
+'''
     def online_leave(self,startDate:datetime,endDate:datetime,selection:list):
         submit_dict = {
             'SEA_SDate':(None,startDate.strftime('%Y/%m/%d')),
@@ -242,11 +289,14 @@ class NtubLoginSystem:
         self.__search_Asp_Utils(self.LEAVE_URL,submit_dict)
         response = self.session.post(self.LEAVE_URL,data=submit_dict,cookies=self.cookies)
         print(response.text)
-    
+''' 
         
 if __name__ == "__main__":
     import getpass
     import pprint
     ntubLogin = NtubLoginSystem(input('User Name:'),getpass.getpass())
-    pprint.pprint(ntubLogin.parse_lessons(3,5))
+    ntubLogin.grab_lessons(ntubLogin.parse_lessons(ntubLogin.get_deptNo("四技財稅"),3,5)['40328660'])
+    #選四技財稅行政法課程
+    ntubLogin.quit_lessons(ntubLogin.parse_lessons(ntubLogin.get_deptNo("四技財稅"),3,5)['40328660'])
+    #退選行政法課程
 
