@@ -74,7 +74,7 @@ class NtubLoginSystem:
     @property
     def name(self):
         return self._name
-    def get_deptNo(self,name):
+    def grab_deptNo(self):
         mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
         try:
             soup = BeautifulSoup(mainPageResponse.text,'lxml')
@@ -92,7 +92,9 @@ class NtubLoginSystem:
         dataDict = {}
         for e in root.findall("DataItem"):
             dataDict[e[1].text] = e[0].text
-        return dataDict[name]
+        return dataDict
+    def get_deptNo(self,name):
+        return self.grab_deptNo()[name]
 
     def parse_lessons(self,deptNo,day,section): #901 , 400
         mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
@@ -157,10 +159,7 @@ class NtubLoginSystem:
         "Desire": "",
         "OpClass": currentDict["OP_Class"],
         "Serial": currentDict["Serial"],
-        "CurTerm": currentDict["Cur_Term"],
-        "CosID": "40328842",
-        "ClassNo": "40320A",
-        "DelAllotCur": ""
+        "CurTerm": currentDict["Cur_Term"]
         }
         response = self.session.post(self.LESSON_URL,data=submit_dict)
         print(response.text)
@@ -252,6 +251,5 @@ if __name__ == "__main__":
     import getpass
     import pprint
     ntubLogin = NtubLoginSystem(input('User Name:'),getpass.getpass())
-    lesson = ntubLogin.parse_lessons(ntubLogin.get_deptNo("四技通識"),2,5)
-    ntubLogin.online_leave(datetime(2021,2,26),datetime(2021,2,26),[x for x in range(3,6)])
-
+    #lesson = ntubLogin.parse_lessons(ntubLogin.get_deptNo("四技資管"),2,5)
+    pprint.pprint(ntubLogin.search_curriculum(109,2))
