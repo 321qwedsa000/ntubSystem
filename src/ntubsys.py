@@ -10,35 +10,6 @@ class NtubLoginFailedException(Exception):
     def __init__(self,message):
         super(NtubLoginFailedException,self).__init__(message)
 
-class LeaveSubmitMode(Enum):
-    SUBMIT = "送出"
-    SAVE_BUT_NOT_SUBMIT="儲存尚未送出"
-'''
-"AA"=公假
-"AB"=喪假
-"AC"=事假
-"AD"=病假
-"AF"=產前假
-"AI"=分娩假
-"AJ"=流產假
-"AK"=陪產假
-"AL"=公假(不)
-"AM"=重大傷病(不)
-"AN"=停班停課
-"AO"=防疫假'
-'''
-class LeaveReason(Enum):
-    OFFICIAL="AA"
-    FUNERAL="AB"
-    PERSONAL="AC"
-    SICK="AD"
-    PREMATERNITY="AF"
-    MATERNITY="AI"	
-    MISCARRIAGE="AJ"
-    PATERNITY="AK"
-    SERIOUSINJURE="AM"
-    EPIDEMIC_PREVENTATION="AO"
-
 class NtubLoginSystem:
     def __search_Asp_Utils(self,url,dic):
         response = self.session.get(url)
@@ -275,46 +246,6 @@ class NtubLoginSystem:
             float(endScore[i].text.replace('*','') if endScore[i].text != "" else "0.00")])
         return scoreTable
 
-
-    def online_leave(self,startDate:datetime,endDate:datetime,selection:list):
-        submit_dict = {
-            "Hid_SerialNo": '',
-            "Hid_SDate": '',
-            "Hid_EDate": '',
-            "Hid_HCode": '',
-            "SEA_Code": "10843033",
-            "SEA_Name": "張皓雨",
-            "SEA_SDate": "2021/02/26",
-            "SEA_EDate": "2021/02/26",
-            "SEA_DN": "D",
-            "SEA_Holiday": 'AC',
-            "SEA_Section$0": "on",
-            "SEA_Section$1": "on",
-            "SEA_Section$2": "on",
-            "SEA_Section$3": "on",
-            "SEA_Section$4": "on",
-            "SEA_Section$5": "on",
-            "SEA_Section$6": "on",
-            "SEA_Section$7": "on",
-            "SEA_Section$8": "on",
-            "SEA_Section$9": "on",
-            "SEA_Section$10": "on",
-            "SEA_Section$11": "on",
-            "SEA_Section$12": "on",
-            "SEA_Section$13": "on",
-            "SEA_Section$14": "on",
-            "SEA_Note": "",
-            "REC_File_Value": "",
-            "REC_FILE_UKEY": "(binary)",
-            "REC_Insert": "儲存尚未送出"
-        }
-        #for e in selection:
-        #    submit_dict[f'SEA_Section${e}']='on'
-        self.__search_Asp_Utils(self.LEAVE_URL,submit_dict)
-        print(submit_dict)
-        response = self.session.post(self.LEAVE_URL,data=submit_dict,params={"CLIENT_ID_value": "ctl00_ContentPlaceHolder1_",
-"keepThis": True},headers={'Referer': 'http://ntcbadm1.ntub.edu.tw/Portal/Main_total.aspx?SysID=STDWEB'})
-        print(response.text)
  
         
 if __name__ == "__main__":
