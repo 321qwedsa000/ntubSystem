@@ -4,11 +4,15 @@ import re
 from enum import Enum
 from datetime import datetime
 import xml.etree.ElementTree as ET
-
+from prettytable import from_html
 
 class NtubLoginFailedException(Exception):
     def __init__(self,message):
-        super(NtubLoginFailedException,self).__init__(message)
+        super().__init__(message)
+
+class NtubNoClassException(Exception):
+    def __init__(self,message):
+        super().__init__(message)
 
 class NtubLoginSystem:
     def __search_Asp_Utils(self,url,dic):
@@ -75,28 +79,29 @@ class NtubLoginSystem:
     def name(self):
         return self._name
     def grab_deptNo(self):
-        mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
         try:
-            soup = BeautifulSoup(mainPageResponse.text,'lxml')
-        except:
-            soup = BeautifulSoup(mainPageResponse.text,'html.parser')
-        submit_data = {
-            "ModuleName": "InitSelDept",
-            "Years": soup.find("input",{"id":"SelYear"})["value"],
-            "Term": soup.find("input",{"id":"SelTerm"})["value"],
-            "Desire": '',
-            "EduNo": soup.find("input",{'id':'EduNo'})['value']
-        }
-        response = self.session.post(self.LESSON_URL,data=submit_data)
-        root = ET.fromstring(response.text)
-        dataDict = {}
-        for e in root.findall("DataItem"):
-            dataDict[e[1].text] = e[0].text
-        return dataDict
-    def get_deptNo(self,name):
-        return self.grab_deptNo()[name]
 
-    def parse_lessons(self,deptNo,day,section): #901 , 400
+            mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
+            try:
+                soup = BeautifulSoup(mainPageResponse.text,'lxml')
+            except:
+                soup = BeautifulSoup(mainPageResponse.text,'html.parser')
+            submit_data = {
+                "ModuleName": "InitSelDept",
+                "Years": soup.find("input",{"id":"SelYear"})["value"],
+                "Term": soup.find("input",{"id":"SelTerm"})["value"],
+                "Desire": '',
+                "EduNo": soup.find("input",{'id':'EduNo'})['value']
+            }
+            response = self.session.post(self.LESSON_URL,data=submit_data)
+            root = ET.fromstring(response.text)
+            dataDict = {}
+            for e in root.findall("DataItem"):
+                dataDict[e[1].text] = e[0].text
+        except KeyError:
+            raise NtubNoClassException("課程未開放")
+        return dataDict
+    def parse_lessons(self,deptNo,day,section):
         mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
         try:
             soup = BeautifulSoup(mainPageResponse.text,'lxml')
@@ -238,7 +243,6 @@ class NtubLoginSystem:
         itemTable = soup.findAll('td',attrs={'width':'330'})
         midScore = soup.findAll('span',attrs={'id':lambda a: a and len(a) >= 8 and a[-8:] == "_Score_M"})
         endScore = soup.findAll('span',attrs={'id':lambda a: a and len(a) >= 6 and a[-6:] == "_Score"})
-        print(len(itemTable),len(midScore),len(endScore))
         for i in range(len(itemTable)):
             scoreTable.append([itemTable[i].text,
             float(midScore[i].text.replace('*','') if midScore[i].text != "" else "0.00"),
@@ -248,8 +252,4 @@ class NtubLoginSystem:
  
         
 if __name__ == "__main__":
-    import getpass
-    import pprint
-    ntubLogin = NtubLoginSystem(input('User Name:'),getpass.getpass())
-    #lesson = ntubLogin.parse_lessons(ntubLogin.get_deptNo("四技資管"),2,5)
-    pprint.pprint(ntubLogin.search_curriculum(109,2))
+    pass
