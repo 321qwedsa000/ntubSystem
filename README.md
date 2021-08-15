@@ -21,6 +21,6 @@
 1. 打開它輸入如下指令
 ```
 pip install ntubSystem
-ntubSystem
+python -m ntubSystem
 ```
 到了這步就完成了。

@@ -1,5 +1,5 @@
 from setuptools import setup,find_packages
-__version__ = "1.0b"
+__version__ = "1.0b5"
 with open("README.md",encoding="utf-8") as FileObj:
     long_desc = FileObj.read()
 setup(
@@ -12,7 +12,7 @@ setup(
     url="https://github.com/321qwedsa000/ntubSystem",
     packages=find_packages(),
     platforms=["any"],
-    install_requires=["requests","bs4","lxml"],
+    install_requires=["requests","beautifulsoup4","prettytable"],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Education",

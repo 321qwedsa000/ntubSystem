@@ -1,4 +1,4 @@
-from ntubsys import NtubLoginSystem , NtubLoginFailedException
+from .ntubsys import NtubLoginSystem , NtubLoginFailedException
 import getpass
 from prettytable import PrettyTable
 def main():
