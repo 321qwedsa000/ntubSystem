@@ -1,5 +1,7 @@
 from setuptools import setup,find_packages
 __version__ = "1.0b"
+with open("README.md",encoding="utf-8") as FileObj:
+    long_desc = FileObj.read()
 setup(
     name="ntubSystem",
     version=__version__,
@@ -8,7 +10,7 @@ setup(
     keywords="ntub",
     license='MIT',
     url="https://github.com/321qwedsa000/ntubSystem",
-    packages=find_packages(where="src"),
+    packages=find_packages(),
     platforms=["any"],
     classifiers=[
         "Development Status :: 4 - Beta",
