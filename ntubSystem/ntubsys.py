@@ -4,7 +4,7 @@ import re
 from enum import Enum
 from datetime import datetime
 import xml.etree.ElementTree as ET
-from prettytable import from_html
+from prettytable import from_html_one
 
 class NtubLoginFailedException(Exception):
     def __init__(self,message):
@@ -39,6 +39,7 @@ class NtubLoginSystem:
         self.CHANGEPWD_URL = "http://ntcbadm1.ntub.edu.tw/STDWEB/STD_PwdChange.aspx" #POST url
         self.LESSON_URL = "http://ntcbadm1.ntub.edu.tw/HttpRequest/SELChooseHttpXML.aspx" #POST URL
         self.MAIN_PAGE_URL = "http://ntcbadm1.ntub.edu.tw/STDWEB/SelChoose/SelChooseMain.aspx" #GET URL
+        self.LESSON_INFO_URL = "http://ntcbadm1.ntub.edu.tw/pub/TchSchedule_Search.aspx" #POST url
         ###################
         # Login into NTUB #
         ###################
@@ -248,8 +249,106 @@ class NtubLoginSystem:
             float(midScore[i].text.replace('*','') if midScore[i].text != "" else "0.00"),
             float(endScore[i].text.replace('*','') if endScore[i].text != "" else "0.00")])
         return scoreTable
+    
+    def getEduTypeOptions(self):
+        response = self.session.get(self.LESSON_INFO_URL)
+        try:
+            soup = BeautifulSoup(response.text,"lxml")
+        except:
+            soup = BeautifulSoup(response.text,"html.parser")
+        result = soup.find("select",{"id":"ddlEdu"}).find_all("option")
+        res = dict()
+        for e in result:
+            res[e.text] = e["value"]
+        return res
 
- 
+    def getDeptTypeOptions(self,EduTypeOption:str) -> tuple:
+        response,submit_dict = self.__getEduInfo(EduTypeOption)
+        try:
+            soup = BeautifulSoup(response.text,'lxml')
+        except:
+            soup = BeautifulSoup(response.text,'html.parser')
+        result = soup.find("select",{"id":"ddlDept"}).find_all("option")
+        res = dict()
+        for e in result:
+            res[e.text] = e["value"]
+        return res
+    def getClassTypeOptions(self,EduTypeOption:str,DeptTypeOption:str):
+        response,submit_dict=self.__getDeptInfo(EduTypeOption,DeptTypeOption)
+        try:
+            soup = BeautifulSoup(response.text,'lxml')
+        except:
+            soup = BeautifulSoup(response.text,'html.parser')
+        result = soup.find("select",{"id":"ddlClass"}).find_all("option")
+        res = dict()
+        for e in result:
+            res[e.text] = e["value"]
+        return res
+    def __getEduInfo(self,EduTypeOption:str) -> tuple:
+        submit_dict = dict()
+        response = self.session.get(self.LESSON_INFO_URL)
+        try:
+            soup = BeautifulSoup(response.text,'lxml')
+        except:
+            soup = BeautifulSoup(response.text,'html.parser')
+        inputData = soup.find_all("input")
+        for e in inputData:
+            try:
+                submit_dict[e["name"]] = e["value"]
+            except:
+                submit_dict[e["name"]] = ""
+        submit_dict["__EVENTTARGET"] = "ddEdu"
+        submit_dict["ddlEdu"] = self.getEduTypeOptions()[EduTypeOption]
+        return (self.session.post(self.LESSON_INFO_URL,submit_dict),submit_dict)
+    def __getDeptInfo(self,EduTypeOption:str,DeptTypeOption:str):
+        response,submit_dict = self.__getEduInfo(EduTypeOption)
+        try:
+            soup = BeautifulSoup(response.text,'lxml')
+        except:
+            soup = BeautifulSoup(response.text,'html.parser')
+        inputData = soup.find_all("input")
+        for e in inputData:
+            try:
+                submit_dict[e["name"]] = e["value"]
+            except:
+                submit_dict[e["name"]] = ""
+        submit_dict["__EVENTTARGET"] = "ddlDept"
+        submit_dict["ddlDept"] = self.getDeptTypeOptions(EduTypeOption)[DeptTypeOption]
+        return (self.session.post(self.LESSON_INFO_URL,submit_dict),submit_dict)
+    def __getClassInfo(self,EduTypeOption:str,DeptTypeOption:str,ClassTypeOption:str):
+        response,submit_dict = self.__getDeptInfo(EduTypeOption,DeptTypeOption)
+        try:
+            soup = BeautifulSoup(response.text,'lxml')
+        except:
+            soup = BeautifulSoup(response.text,'html.parser')
+        inputData = soup.find_all("input")
+        for e in inputData:
+            try:
+                submit_dict[e["name"]] = e["value"]
+            except:
+                submit_dict[e["name"]] = ""
+        submit_dict["ddlClass"] = self.getClassTypeOptions(EduTypeOption,DeptTypeOption)[ClassTypeOption]
+        return (self.session.post(self.LESSON_INFO_URL,submit_dict),submit_dict)
+    def get_all_lesson_info(self):
+        response,submit_dict = self.__getEduInfo("請選擇學制")
+        print(response.text)
+    def get_lesson_info(self,EduTypeOption:str,DeptTypeOption:str,ClassTypeOption):
+        response,submit_dict = self.__getClassInfo(EduTypeOption,DeptTypeOption,ClassTypeOption)
+        lst = []
+        try:
+            soup = BeautifulSoup(response.text,"lxml")
+        except:
+            soup = BeautifulSoup(response.text,"html.parser")
+        table = soup.find("table",{"id":"dsCurList"})
+        for row in table.find_all("tr"):
+            newRow = []
+            if len(row.find_all("td")) == 11: continue
+            for column in row.find_all("td"):
+                newRow.append(column.text.replace('\n','').replace('\r','').replace(' ',''))
+            lst.append(newRow)
+        return lst
         
 if __name__ == "__main__":
-    pass
+    student = NtubLoginSystem("10843033","321qwedsantub")
+    #student.get_all_lesson_info()
+    print(student.get_lesson_info("4 四技日間部","四技通識","四技通識興趣必選修(臺北)"))
