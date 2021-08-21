@@ -349,6 +349,6 @@ class NtubLoginSystem:
         return lst
         
 if __name__ == "__main__":
-    student = NtubLoginSystem("10843033","321qwedsantub")
+    student = NtubLoginSystem("","")
     #student.get_all_lesson_info()
     print(student.get_lesson_info("4 四技日間部","四技通識","四技通識興趣必選修(臺北)"))
