@@ -151,7 +151,7 @@ class NtubLoginSystem:
             "ConvertData": soup.find("input",{"id":"ConvertData"})["value"]
         }
         response = self.session.post(self.LESSON_URL,data=submit_dict)
-        print(response.text)
+        return response.text
     def quit_lessons(self,currentDict):
         mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
         try:
@@ -168,7 +168,7 @@ class NtubLoginSystem:
         "CurTerm": currentDict["Cur_Term"]
         }
         response = self.session.post(self.LESSON_URL,data=submit_dict)
-        print(response.text)
+        return response.text
 
     def search_curriculum(self,thisYear:int,thisTeam:int):
         search_dict = {
@@ -349,6 +349,4 @@ class NtubLoginSystem:
         return lst
         
 if __name__ == "__main__":
-    student = NtubLoginSystem("","")
-    #student.get_all_lesson_info()
-    print(student.get_lesson_info("4 四技日間部","四技通識","四技通識興趣必選修(臺北)"))
+    pass
