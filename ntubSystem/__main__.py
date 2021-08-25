@@ -47,7 +47,29 @@ def main():
                 table.add_rows(lst)
                 print(table)
             elif option == 4:
-                pass
+                data = student.grab_deptNo()
+                lst = []
+                index = 1
+                for e in data:
+                    lst.append([index,e])
+                    index += 1
+                table = PrettyTable(["代號","學系"])
+                table.add_rows(lst)
+                print(table)
+                deptNo = lst[int(input(f"請選擇代號(1~{index-1})︰"))-1][1]
+                print(f"你選了'{deptNo}'")
+                day = int(input("請輸入星期(1~7)︰"))
+                print(f"你選了星期{day}")
+                section = int(input("請輸入節次(1-14):"))
+                data = student.parse_lessons(data[deptNo],day,section)
+                table = PrettyTable(['代號','必選修','開課班級/組別','科目名稱','學分','通識領域','上課節次','授課老師','已選人數','人數上限'])
+                lst = []
+                index = 1
+                for e in data:
+                    lst.append(e)
+                    table.add_row([index,data[e]['SelKind_Name'],data[e]['Class_Name'],data[e]['Cos_Name'],data[e]['Cos_Hours'],data[e]['CurClass_SecName'],data[e]['Cur_Time'],data[e]['Teacher_Name'],data[e]['Sel_Counts'],data[e]['Sel_Max']])
+                    index += 1
+                print(table)
             elif option == 5:
                 break
     except NtubLoginFailedException:

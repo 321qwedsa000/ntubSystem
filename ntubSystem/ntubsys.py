@@ -40,6 +40,7 @@ class NtubLoginSystem:
         self.LESSON_URL = "http://ntcbadm1.ntub.edu.tw/HttpRequest/SELChooseHttpXML.aspx" #POST URL
         self.MAIN_PAGE_URL = "http://ntcbadm1.ntub.edu.tw/STDWEB/SelChoose/SelChooseMain.aspx" #GET URL
         self.LESSON_INFO_URL = "http://ntcbadm1.ntub.edu.tw/pub/TchSchedule_Search.aspx" #POST url
+        self.EXPORT_CURRICULUM_URL = "http://ntcbadm1.ntub.edu.tw/STDWEB/Sel_Student_Excel.aspx" #POST url
         ###################
         # Login into NTUB #
         ###################
@@ -111,7 +112,7 @@ class NtubLoginSystem:
         submit_dict = {
             "ModuleName": 'QueryCurData',
             "EduNo": soup.find("input",{'id':'EduNo'})['value'],
-            "Desire": '',
+            "Desire": 'Y',
             "DeptNo": deptNo,
             "Grade": '',
             "Week": day,
@@ -170,10 +171,35 @@ class NtubLoginSystem:
         response = self.session.post(self.LESSON_URL,data=submit_dict)
         return response.text
 
+    def export_curriculum(self,thisYear:int,thisTeam:int):
+        from pprint import pprint
+        submit_dict = {
+            'ThisYear':thisYear,
+            'ThisTeam':thisTeam,
+            'doQuery':'Y',
+            'ToExcel':'Y'
+        }
+        response = self.session.get(self.CURRICULUM_URL)
+        try:
+            soup = BeautifulSoup(response.text,'lxml')
+        except:
+            soup = BeautifulSoup(response.text,'html.parser')
+        for e in soup.find_all("input",{"id":lambda a: a != None}):
+            try:
+                submit_dict[e["id"]] = e["value"]
+            except:
+                submit_dict[e["id"]] = ""
+        submit_dict["ThisYear"] = thisYear
+        submit_dict["ThisTeam"] = thisTeam
+        submit_dict["doQuery"] = 'Y'
+        submit_dict["ToExcel"] = 'Y'
+        response = self.session.post(self.EXPORT_CURRICULUM_URL,submit_dict)
+        pass #code goes here
     def search_curriculum(self,thisYear:int,thisTeam:int):
         search_dict = {
             'ThisYear':thisYear,
             'ThisTeam':thisTeam,
+            'doQuery':'Y'
         }
         self.__search_Asp_Utils(self.CURRICULUM_URL,search_dict)
         response = self.session.get(self.CURRICULUM_URL,data=search_dict,cookies=self.cookies)
@@ -197,7 +223,6 @@ class NtubLoginSystem:
                     column.append(replaceStr)
             table.append(column)
         return table
-    
     def search_midtern_score(self,seayear:int,seaterm:int):
         search_dict = {
             'ctl00$ContentPlaceHolder1$SEA_Year':seayear,
@@ -349,4 +374,5 @@ class NtubLoginSystem:
         return lst
         
 if __name__ == "__main__":
-    pass
+    student = NtubLoginSystem("10843033","321qwedsantub")
+    student.export_curriculum(110,1)
