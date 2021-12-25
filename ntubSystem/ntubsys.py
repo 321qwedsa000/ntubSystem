@@ -5,7 +5,7 @@ from enum import Enum
 from datetime import datetime
 import xml.etree.ElementTree as ET
 from prettytable import from_html_one
-
+from concurrent.futures import ThreadPoolExecutor,as_completed
 class NtubLoginFailedException(Exception):
     def __init__(self,message):
         super().__init__(message)
@@ -104,55 +104,61 @@ class NtubLoginSystem:
             raise NtubNoClassException("課程未開放")
         return dataDict
     def parse_lessons(self,deptNo,day,section):
-        mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
         try:
-            soup = BeautifulSoup(mainPageResponse.text,'lxml')
-        except:
-            soup = BeautifulSoup(mainPageResponse.text,'html.parser')
-        submit_dict = {
-            "ModuleName": 'QueryCurData',
-            "EduNo": soup.find("input",{'id':'EduNo'})['value'],
-            "Desire": 'Y',
-            "DeptNo": deptNo,
-            "Grade": '',
-            "Week": day,
-            "Section": section,
-            "CosName": '',
-            "CurClass": ''
-        }
-        response = self.session.post(self.LESSON_URL,data=submit_dict)
-        root = ET.fromstring(response.text)
-        dic = {}
-        for e in root.findall("DataItem"):
-            dataColumn = {}
-            for f in e:
-                dataColumn[f.tag] = f.text
-            dic[dataColumn["Cos_ID"]] = dataColumn
-        return dic
+            mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
+            try:
+                soup = BeautifulSoup(mainPageResponse.text,'lxml')
+            except:
+                soup = BeautifulSoup(mainPageResponse.text,'html.parser')
+            submit_dict = {
+                "ModuleName": 'QueryCurData',
+                "EduNo": soup.find("input",{'id':'EduNo'})['value'],
+                "Desire": 'Y',
+                "DeptNo": deptNo,
+                "Grade": '',
+                "Week": day,
+                "Section": section,
+                "CosName": '',
+                "CurClass": ''
+            }
+            response = self.session.post(self.LESSON_URL,data=submit_dict)
+            root = ET.fromstring(response.text)
+            dic = {}
+            for e in root.findall("DataItem"):
+                dataColumn = {}
+                for f in e:
+                    dataColumn[f.tag] = f.text
+                dic[dataColumn["Cos_ID"]] = dataColumn
+            return dic
+        except KeyError:
+            raise NtubNoClassException("課程未開放")
     def grab_lessons(self,currentDict):
-        mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
         try:
-            soup = BeautifulSoup(mainPageResponse.text,'lxml')
-        except:
-            soup = BeautifulSoup(mainPageResponse.text,'html.parser')
-        submit_dict = {
-            "ModuleName": "DoAddCur",
-            "Years": soup.find("input",{"id":"SelYear"})["value"],
-            "Term": soup.find("input",{"id":"SelTerm"})["value"],
-            "Desire": '',
-            "OpClass": currentDict["OP_Class"],
-            "Serial": currentDict["Serial"],
-            "CurTerm": currentDict["Cur_Term"],
-            "EduData": soup.find("input",{"id":"EduData"})["value"],
-            "Contrast": soup.find("input",{"id":"Contrast"})["value"],
-            "CreditData": soup.find("input",{"id":"CreditData"})["value"],
-            "AddData": soup.find("input",{"id":"AddData"})["value"],
-            "EduCourseData": soup.find("input",{"id":"EduCourseData"})["value"],
-            "OtherData": soup.find("input",{"id":"OtherData"})["value"],
-            "ConvertData": soup.find("input",{"id":"ConvertData"})["value"]
-        }
-        response = self.session.post(self.LESSON_URL,data=submit_dict)
-        return response.text
+            mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
+            try:
+                soup = BeautifulSoup(mainPageResponse.text,'lxml')
+            except:
+                soup = BeautifulSoup(mainPageResponse.text,'html.parser')
+            submit_dict = {
+                "ModuleName": "DoAddCur",
+                "Years": soup.find("input",{"id":"SelYear"})["value"],
+                "Term": soup.find("input",{"id":"SelTerm"})["value"],
+                "Desire": '',
+                "OpClass": currentDict["OP_Class"],
+                "Serial": currentDict["Serial"],
+                "CurTerm": currentDict["Cur_Term"],
+                "EduData": soup.find("input",{"id":"EduData"})["value"],
+                "Contrast": soup.find("input",{"id":"Contrast"})["value"],
+                "CreditData": soup.find("input",{"id":"CreditData"})["value"],
+                "AddData": soup.find("input",{"id":"AddData"})["value"],
+                "EduCourseData": soup.find("input",{"id":"EduCourseData"})["value"],
+                "OtherData": soup.find("input",{"id":"OtherData"})["value"],
+                "ConvertData": soup.find("input",{"id":"ConvertData"})["value"]
+            }
+            response = self.session.post(self.LESSON_URL,data=submit_dict)
+            return response.text
+        except KeyError:
+            raise NtubNoClassException("課程未開放")
     def quit_lessons(self,currentDict):
         mainPageResponse = self.session.get(self.MAIN_PAGE_URL)
         try:
@@ -194,7 +200,7 @@ class NtubLoginSystem:
         submit_dict["doQuery"] = 'Y'
         submit_dict["ToExcel"] = 'Y'
         response = self.session.post(self.EXPORT_CURRICULUM_URL,submit_dict)
-        pass #code goes here
+        print(response.text)
     def search_curriculum(self,thisYear:int,thisTeam:int):
         search_dict = {
             'ThisYear':thisYear,
@@ -340,7 +346,7 @@ class NtubLoginSystem:
         submit_dict["__EVENTTARGET"] = "ddlDept"
         submit_dict["ddlDept"] = self.getDeptTypeOptions(EduTypeOption)[DeptTypeOption]
         return (self.session.post(self.LESSON_INFO_URL,submit_dict),submit_dict)
-    def __getClassInfo(self,EduTypeOption:str,DeptTypeOption:str,ClassTypeOption:str):
+    def __getClassInfo(self,Years:int,Term:int,EduTypeOption:str,DeptTypeOption:str,ClassTypeOption:str):
         response,submit_dict = self.__getDeptInfo(EduTypeOption,DeptTypeOption)
         try:
             soup = BeautifulSoup(response.text,'lxml')
@@ -353,12 +359,11 @@ class NtubLoginSystem:
             except:
                 submit_dict[e["name"]] = ""
         submit_dict["ddlClass"] = self.getClassTypeOptions(EduTypeOption,DeptTypeOption)[ClassTypeOption]
+        submit_dict['txtYears'] = str(Years)
+        submit_dict['txtTerm'] = str(Term)
         return (self.session.post(self.LESSON_INFO_URL,submit_dict),submit_dict)
-    def get_all_lesson_info(self):
-        response,submit_dict = self.__getEduInfo("請選擇學制")
-        print(response.text)
-    def get_lesson_info(self,EduTypeOption:str,DeptTypeOption:str,ClassTypeOption):
-        response,submit_dict = self.__getClassInfo(EduTypeOption,DeptTypeOption,ClassTypeOption)
+    def get_lesson_info(self,Years:int,Term:int,EduTypeOption:str,DeptTypeOption:str,ClassTypeOption):
+        response,submit_dict = self.__getClassInfo(Years,Term,EduTypeOption,DeptTypeOption,ClassTypeOption)
         lst = []
         try:
             soup = BeautifulSoup(response.text,"lxml")
@@ -372,7 +377,10 @@ class NtubLoginSystem:
                 newRow.append(column.text.replace('\n','').replace('\r','').replace(' ',''))
             lst.append(newRow)
         return lst
-        
+    
+    
+
 if __name__ == "__main__":
-    student = NtubLoginSystem("10843033","321qwedsantub")
-    student.export_curriculum(110,1)
+    from __main__ import main
+    main()
+        

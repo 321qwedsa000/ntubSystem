@@ -12,7 +12,7 @@ setup(
     url="https://github.com/321qwedsa000/ntubSystem",
     packages=find_packages(),
     platforms=["any"],
-    install_requires=["requests","beautifulsoup4","prettytable"],
+    install_requires=["requests","bs4","prettytable","lxml"],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Education",
